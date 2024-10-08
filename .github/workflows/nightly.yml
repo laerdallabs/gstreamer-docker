@@ -1,0 +1,11 @@
+on:
+  schedule:
+    - cron: '0 5 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  build-and-push-main:
+    name: Build and push latest main
+    uses: ./.github/workflows/build-and-push-image.yml
+    with:
+      gstreamer_ref: 'main'

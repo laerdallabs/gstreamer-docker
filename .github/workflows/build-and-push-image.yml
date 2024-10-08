@@ -1,0 +1,88 @@
+name: Build and push the Docker image
+
+on:
+  workflow_dispatch:
+    inputs:
+      debian_version:
+        description: 'Debian version'
+        required: false
+        type: string
+        default: 'bullseye'
+      gstreamer_repo:
+        description: 'GStreamer repo'
+        required: false
+        type: string
+        default: 'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
+      gstreamer_ref:
+        description: 'GStreamer ref to build'
+        required: false
+        type: string
+        default: 'main'
+  workflow_call:
+    inputs:
+      debian_version:
+        description: 'Debian version'
+        required: false
+        type: string
+        default: 'bullseye'
+      gstreamer_repo:
+        description: 'GStreamer repo'
+        required: false
+        type: string
+        default: 'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
+      gstreamer_ref:
+        description: 'GStreamer ref to build'
+        required: false
+        type: string
+        default: 'main'
+
+jobs:
+  build-and-push-image:
+    name: Build and push the Docker image
+    runs-on:
+      group: larger-ubuntu-latest
+    concurrency:
+      group: docker-build-and-push-${{ inputs.debian_version }}-${{ inputs.gstreamer_ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ inputs.debian_version }}-${{ inputs.gstreamer_ref }}
+
+      - name: Build the Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            DEBIAN_VERSION=${{ inputs.debian_version }}
+            GSTREAMER_REPO=${{ inputs.gstreamer_repo }}
+            GSTREAMER_REF=${{ inputs.gstreamer_ref }}
+          push: ${{ github.event_name != 'merge_group' }}
+          cache-from: type=gha
+          cache-to: ${{ github.event_name != 'merge_group' && 'type=gha,mode=max,ignore-error=true' || '' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
