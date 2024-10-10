@@ -69,7 +69,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/laerdallabs/gstreamer
           tags: |
             type=raw,value=${{ inputs.debian_version }}-${{ inputs.gstreamer_ref }}
 
