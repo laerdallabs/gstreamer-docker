@@ -71,7 +71,7 @@ jobs:
           images: |
             ghcr.io/laerdallabs/gstreamer
           tags: |
-            type=raw,value=${{ inputs.debian_version }}-${{ inputs.gstreamer_ref }}
+            type=raw,value=${{ inputs.gstreamer_ref  }}-${{ inputs.debian_version }}
 
       - name: Build the Docker image
         uses: docker/build-push-action@v6
