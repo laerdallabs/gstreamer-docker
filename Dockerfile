@@ -1,4 +1,4 @@
-ARG DEBIAN_VERSION=bullseye
+ARG DEBIAN_VERSION=bookworm
 FROM debian:${DEBIAN_VERSION} AS build-deps
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -7,14 +7,21 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 ENV PATH="${PATH}:/root/.cargo/bin"
 
-RUN sed -i 's/^deb .*main$/& contrib non-free/g' /etc/apt/sources.list \
+RUN apt-get update && apt-get -y install --no-install-recommends \
+      python3 \
+      python3-venv \
+      python3-pip \
+      python3-dev
+
+RUN python3 -m venv /opt/venv
+RUN . /opt/venv/bin/activate
+
+RUN sed -i 's/^deb .*main$/& contrib non-free/g' /etc/apt/sources.list.d/debian.sources \
+    && sed -i 's/^deb-src .*main$/& contrib non-free/g' /etc/apt/sources.list.d/debian.sources \
     && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
       build-essential \
       ca-certificates \
-      python3 \
-      python3-pip \
-      python3-dev \
       gcc \
       clang-16 \
       cmake \
